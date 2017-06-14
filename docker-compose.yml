@@ -1,0 +1,65 @@
+version: '2'
+services:
+    capitalize-java:
+        container_name: capitalize-java
+        image: maven:latest
+        working_dir: /usr/src/app
+        volumes:
+            - ./capitalize-java:/usr/src/app
+        command: bash -c "mvn compile && mvn exec:java"
+
+    capitalize-node:
+        container_name: capitalize-node
+        image: node:boron
+        command: bash -c "yarn install && npm start"
+        working_dir: /usr/src/app
+        volumes:
+            - ./capitalize-node:/usr/src/app
+            - /usr/src/app/node_modules
+        environment:
+            - PORT=3000
+
+    reverse:
+        container_name: reverse
+        image: python:2
+        command: bash -c "pip install -r requirements.txt && python -u server.py"
+        working_dir: /usr/src/app
+        volumes:
+            - ./reverse:/usr/src/app
+        environment:
+            - PORT=3000
+
+    uncapitalize:
+        container_name: uncapitalize
+        image: ruby:2
+        command: bash -c "bundle install && ruby server.rb"
+        working_dir: /usr/src/app
+        volumes:
+            - ./uncapitalize:/usr/src/app
+        environment:
+            - PORT=3000
+
+    gateway:
+        container_name: gateway
+        image: node:boron
+        command: bash -c "yarn install && npm start"
+        working_dir: /usr/src/app
+        volumes:
+            - ./gateway:/usr/src/app
+            - /usr/src/app/node_modules
+        ports:
+            - "8000:8000"
+        environment:
+            - PORT=8000
+            - CAPITALIZE_HOST=capitalize-java
+            - CAPITALIZE_PORT=3000
+            - REVERSE_HOST=reverse
+            - REVERSE_PORT=3000
+            - UNCAPITALIZE_HOST=uncapitalize
+            - UNCAPITALIZE_PORT=3000
+        depends_on:
+            - capitalize-java
+            - reverse
+            - uncapitalize
+
+
